@@ -1,3 +1,4 @@
 auth
 *.db
 node_modules/
+config.yaml
