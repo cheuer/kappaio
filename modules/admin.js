@@ -60,8 +60,10 @@ module.exports = function (irc) {
     };
 
     cmds.join = function (m, chan) {
+        if (chan[0] !== '#') chan = '#' + chan;
         if (!~irc.config.channels.indexOf(chan)) {
             irc.config.channels.push(chan);
+            irc.config.nolearnchannels.push(chan);
             saveConfig();
         }
         irc.send('join', chan);

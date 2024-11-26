@@ -6,8 +6,11 @@ info:
   nick: SGChatter
   user: SGChatter
   name: SGChatter
-  client_id: 1234abcd
-  client_secret: 1234abcd
+  pass: oauth:token_value
+
+client_id: 1234abcd
+client_secret: 1234abcd
+refresh_token: 1234abcd
 
 channels:
   - '#spleebie'
@@ -56,7 +59,7 @@ ai: # These may take some explaining
 
   associations: # Hebbian association network configuration
 
-    halflife: 10,
+    halflife: 10
       # The association will lose half of its value `halflife` days after it
       # is last encountered in a sentence. Making this value lower will make
       # the bot focus on recent events, while making it longer will cause it
@@ -97,7 +100,7 @@ ai: # These may take some explaining
     # topics while lowering it will cause it to pick less typical topics. Best
     # left at 50
 
-  creativity: 15 # between 1 and 100
+  creativity: 30 # between 1 and 100
     # Controls creative use of language. If increased to 100, the bot will
     # often use words in contexts where they were never used before. When
     # reduced, the bot will be more cautious when recognizing patterns. Setting
@@ -142,7 +145,8 @@ ai: # These may take some explaining
     # Causes the bot to sleep between 2 and 5 seconds before answering. Makes
     # it look more human.
 
-  maxfreq: # min time between responses, per channel
+  maxfreq: # min seconds between responses, per channel
+    default: 60
     spleebie: 30
 
   answer: # controls answer length
@@ -151,7 +155,7 @@ ai: # These may take some explaining
 
   partake: # control unsolicited reply (makes the bot reply even though its
            # nickname is not in the message
-    spleebie:
+    default:
       probability: 10
       traffic: 0
 

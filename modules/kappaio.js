@@ -6,7 +6,6 @@ var learner = require('../lib/learner'),
     _ = require('lodash'),
     context = require('../lib/context');
 
-
 function enoughLove(amount) {
     var love = Math.random() * 100,
         enough = love < amount;
@@ -74,7 +73,7 @@ module.exports = function (irc) {
 
             var aiconf = aiopts.defaults(irc.config.ai);
 
-            var partconf = aiconf.partake[e.target.toLowerCase().substring(1)] || { probability: 1, traffic: -1 };
+            var partconf = aiconf.partake[e.target.toLowerCase().substring(1)] || aiconf.partake.default || { probability: 10, traffic: 0 };
             var shouldPartake = e.target[0] == '#' &&
                 partake.decide(e.target, partconf.probability, partconf.traffic);
 
@@ -105,6 +104,8 @@ module.exports = function (irc) {
             if (!replyToMsg) {
                 return null;
             }
+
+            console.log('Trying to reply...');
 
             var timeout = 1;
             if (aiconf.sleep)
