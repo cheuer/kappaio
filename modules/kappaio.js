@@ -97,7 +97,7 @@ module.exports = function (irc) {
             var lastMessage = lastMessages[e.target] || 0;
             var replyToMsg = (!onChannel || shouldPartake || (wasAddressed && enoughLove(love)))
                 && !_.includes(rochans, e.target.toLowerCase())
-                && ((now - lastMessage) > maxfreq * 1000); // Time since last message > maxfreq
+                && (wasAddressed || (now - lastMessage) > maxfreq * 1000); // Time since last message > maxfreq
 
             var shouldLearn = text.split(' ').length >= 3
                 && !_.includes(irc.config.nolearnchannels, clnt);
