@@ -5,7 +5,7 @@ SQLite database for storage.
 
 KappaIO was designed to learn from TwitchTV channels and talk.
 
-Originally forked from Triplie https://github.com/spion/triplie-ng
+Forked from https://github.com/paralin/KappaIO which was originally forked from Triplie https://github.com/spion/triplie-ng
 
 # ORIGINAL INTRODUCTION
 
