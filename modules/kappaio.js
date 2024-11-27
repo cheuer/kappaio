@@ -6,6 +6,12 @@ var learner = require('../lib/learner'),
     _ = require('lodash'),
     context = require('../lib/context');
 
+
+var path = require('path');
+var args = require('optimist').argv;
+var Config = require('../lib/config.js');
+var configFile = path.resolve(process.cwd(), args._[0] || 'config.yaml');
+
 function enoughLove(amount) {
     var love = Math.random() * 100,
         enough = love < amount;
@@ -140,8 +146,9 @@ module.exports = function (irc) {
 
 
     irc.on('connect', function () {
-        var core = irc.use(require('ircee/core'));
-        core.login(irc.config.info);
+        var core = irc.use(require('ircee/core')),
+            config = Config.load(args);
+        core.login(config.info);
     });
 
     irc.on('001', function (e) {
