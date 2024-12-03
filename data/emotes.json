@@ -1,12 +1,3 @@
-// twitch api get chat/emotes -q broadcaster_id=80145304 | grep name
-// twitch api get chat/emotes -q broadcaster_id=78182396 | grep name
-// twitch api get chat/emotes -q broadcaster_id=125216434 | grep name
-// twitch api get chat/emotes -q broadcaster_id=125217175 | grep name
-// twitch api get chat/emotes -q broadcaster_id=176741569 | grep name
-// twitch api get chat/emotes -q broadcaster_id=176741598 | grep name
-// twitch api get chat/emotes -q broadcaster_id=176743152 | grep name
-// twitch api get chat/emotes -q broadcaster_id=176743235 | grep name
-//
 [
     "JinxLUL",
     "FeelsVi",
