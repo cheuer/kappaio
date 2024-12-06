@@ -51,10 +51,10 @@ module.exports = function (irc) {
     cmds.admin = function (m, user) {
         userString = user += '!*'
         if (_.includes(irc.config.admins, userString)) {
-            self.respond(user + ' is already an admin');
+            this.respond(user + ' is already an admin');
         } else {
             irc.config.admins.push(userString);
-            self.respond('Admin added');
+            this.respond('Admin added');
             saveConfig();
         }
     };
@@ -73,7 +73,7 @@ module.exports = function (irc) {
         if (!~irc.config.nolearnchannels.indexOf(chan)) {
             irc.config.nolearnchannels.push(chan);
             saveConfig();
-            self.respond('Not learning from ' + chan);
+            this.respond('Not learning from ' + chan);
         }
     };
 
@@ -82,7 +82,7 @@ module.exports = function (irc) {
         if (~irc.config.nolearnchannels.indexOf(chan)) {
             irc.config.nolearnchannels.splice(irc.config.nolearnchannels.indexOf(chan), 1);
             saveConfig();
-            self.respond('Learning from ' + chan);
+            this.respond('Learning from ' + chan);
         }
     };
 
