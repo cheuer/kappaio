@@ -63,10 +63,27 @@ module.exports = function (irc) {
         if (chan[0] !== '#') chan = '#' + chan;
         if (!~irc.config.channels.indexOf(chan)) {
             irc.config.channels.push(chan);
-            irc.config.nolearnchannels.push(chan);
             saveConfig();
         }
         irc.send('join', chan);
+    };
+
+    cmds.nolearn = function (m, chan) {
+        if (chan[0] !== '#') chan = '#' + chan;
+        if (!~irc.config.nolearnchannels.indexOf(chan)) {
+            irc.config.nolearnchannels.push(chan);
+            saveConfig();
+            self.respond('Not learning from ' + chan);
+        }
+    };
+
+    cmds.learn = function (m, chan) {
+        if (chan[0] !== '#') chan = '#' + chan;
+        if (~irc.config.nolearnchannels.indexOf(chan)) {
+            irc.config.nolearnchannels.splice(irc.config.nolearnchannels.indexOf(chan), 1);
+            saveConfig();
+            self.respond('Learning from ' + chan);
+        }
     };
 
     cmds.part = function (m, chan) {
