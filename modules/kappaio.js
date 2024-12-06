@@ -125,8 +125,7 @@ module.exports = function (irc) {
             setTimeout(reply.bind(reply, ctx.get(), function (err, response) {
                 response = response || irc.config.default_response;
                 response = emotes.fix(response);
-                lastMessage = lastMessages[e.target] || 0;
-                if (response && ((now - lastMessage) > maxfreq * 1000)) {
+                if (response) {
                     lastMessages[e.target] = now;
                     if (response.match(/^.action\s+/)) {
                         if (response.charCodeAt(response.length - 1) !== 1)
