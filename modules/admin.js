@@ -64,6 +64,7 @@ module.exports = function (irc) {
         if (!~irc.config.channels.indexOf(chan)) {
             irc.config.channels.push(chan);
             saveConfig();
+            this.respond('Joining ' + chan);
         }
         irc.send('join', chan);
     };
@@ -91,6 +92,7 @@ module.exports = function (irc) {
         if (~irc.config.channels.indexOf(chan)) {
             irc.config.channels.splice(irc.config.channels.indexOf(chan), 1);
             saveConfig();
+            this.respond('Leaving ' + chan);
         }
         irc.send('part', chan);
     };
