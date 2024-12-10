@@ -90,7 +90,7 @@ module.exports = function (irc) {
             if (null == love) love = irc.config.ai.love.default;
             if (null == love) love = 100;
 
-            var maxfreq = irc.config.ai.maxfreq[e.target.substring(1)] || 15;
+            var maxfreq = irc.config.ai.maxfreq[e.target.substring(1)] || irc.config.ai.maxfreq.default || 180;
 
             var lastMessage = lastMessages[e.target] || 0;
             var replyToMsg = (!onChannel || shouldPartake || (wasAddressed && enoughLove(love)))
