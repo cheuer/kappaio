@@ -120,7 +120,7 @@ module.exports = function (irc) {
             //console.log(e.user.nick, e.text);
             var reply = replyer(db, irc.config.ai);
             var sendto = onChannel ? e.target : e.user.nick;
-            var prefix = wasAddressed && onChannel ? e.user.nick + ', ' : '';
+            var prefix = wasAddressed && onChannel ? '@' + e.user.nick + ' ' : '';
 
             setTimeout(reply.bind(reply, ctx.get(), function (err, response) {
                 response = response || irc.config.default_response;
