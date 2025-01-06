@@ -154,6 +154,7 @@ module.exports = function (irc) {
                         irc.send('privmsg', sendto, prefix + response);
                     ctx.push(e.user.nick, prefix + response, Date.now());
                     console.log(sendto, prefix + response);
+                    db.history.put(e.target, e.user.nick, e.text, response);
                 }
             }), timeout);
         }
