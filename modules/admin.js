@@ -1,10 +1,29 @@
-var fs = require('fs');
+var fs = require('fs'),
+    _ = require('lodash');
 
 module.exports = function (irc) {
     var db = irc.use(require('./db'));
 
     var admins = irc.config.admins || [];
+    var cmdchar = irc.config.cmdchar || '$'
 
+    var channelCommands = [
+        "ignore",
+        "help",
+        "love",
+        "maxfreq",
+        "partake",
+        "leave"
+    ];
+
+    var botChannel = '#' + irc.config.info.nick.toLower
+    var botChannelCommands = [
+        "summon"
+    ];
+
+    /**
+     * @param {string} address
+     */
     var isAdmin = exports.isAdmin = function isAdmin(address) {
         var f = admins.filter(function (a) {
             try {
@@ -16,10 +35,29 @@ module.exports = function (irc) {
         return f.length;
     };
 
-    var cmdchar = irc.config.cmdchar || '>'
+    function hasPermission(user, channel, cmd) {
+        if (isAdmin(user)) return true;
+        if ('#' + user == channel && _.includes(channelCommands, cmd)) return true;
+        if (channel == botChannel && _.includes(botChannelCommands, cmd)) return true;
+        return false;
+    }
 
     irc.on('privmsg', function (m) {
-        if (m.text.length && m.text[0] == cmdchar && isAdmin(m.source)) {
+        // {
+        //     raw: ':spleebie!spleebie@spleebie.tmi.twitch.tv PRIVMSG #spleebie :I still have to work tomorrow\r',
+        //     source: 'spleebie!spleebie@spleebie.tmi.twitch.tv',
+        //     cmd: 'PRIVMSG',
+        //     user: {
+        //       address: 'spleebie!spleebie@spleebie.tmi.twitch.tv',
+        //       nick: 'spleebie',
+        //       user: 'spleebie',
+        //       host: 'spleebie.tmi.twitch.tv'
+        //     },
+        //     params: [ '#spleebie' ],
+        //     target: '#spleebie',
+        //     text: 'I still have to work tomorrow'
+        // }
+        if (m.text.length && m.text[0] == cmdchar) {
             var responder = {};
 
             var nochar = m.text.substr(1), which;
@@ -28,11 +66,17 @@ module.exports = function (irc) {
             responder.respond = irc.send.bind(irc, 'privmsg', sendto);
             var args = which.slice(1);
             args.unshift(m);
+            const cmd = which[0];
 
-            if (which[0] && typeof (cmds[which[0]]) === 'function')
-                cmds[which[0]].apply(responder, args);
+            if (!hasPermission(m.user.user, m.target, cmd)) {
+                console.log('No permission: user: %s, channel: %s, command: %s', m.user.user, m.target, cmd);
+                return;
+            }
+
+            if (cmd && typeof (cmds[cmd]) === 'function')
+                cmds[cmd].apply(responder, args);
             else
-                responder.respond('no such command: ' + which[0]);
+                responder.respond('no such command: ' + cmd);
         }
     });
 
@@ -69,6 +113,16 @@ module.exports = function (irc) {
         irc.send('join', chan);
     };
 
+    cmds.part = function (m, chan) {
+        chan = chan || m.target;
+        if (~irc.config.channels.indexOf(chan)) {
+            irc.config.channels.splice(irc.config.channels.indexOf(chan), 1);
+            saveConfig();
+            this.respond('Leaving ' + chan);
+        }
+        irc.send('part', chan);
+    };
+
     cmds.nolearn = function (m, chan) {
         if (chan[0] !== '#') chan = '#' + chan;
         if (!~irc.config.nolearnchannels.indexOf(chan)) {
@@ -85,16 +139,6 @@ module.exports = function (irc) {
             saveConfig();
             this.respond('Learning from ' + chan);
         }
-    };
-
-    cmds.part = function (m, chan) {
-        chan = chan || m.target;
-        if (~irc.config.channels.indexOf(chan)) {
-            irc.config.channels.splice(irc.config.channels.indexOf(chan), 1);
-            saveConfig();
-            this.respond('Leaving ' + chan);
-        }
-        irc.send('part', chan);
     };
 
     cmds.db = function (m, subcmd) {
@@ -128,6 +172,94 @@ module.exports = function (irc) {
         c[last] = JSON.parse(val);
         saveConfig();
         this.respond(last + ' = ' + JSON.stringify(c[last]));
+    };
+
+    cmds.ignore = function (m, user) {
+        if (!user) {
+            this.respond('Usage: ' + cmdchar + 'ignore <username>');
+        }
+        const pattern = user + "!*";
+        if (!~irc.config.ignore.users.indexOf(pattern)) {
+            irc.config.ignore.users.push(pattern);
+            saveConfig();
+            this.respond('Now ignoring ' + user);
+        } else {
+            this.respond('Already ignoring ' + user);
+        }
+    };
+
+    cmds.help = function (m) {
+        // love: this is a % chance that the bot will reply when addressed (says his name with or without @ symbol) (default 50%)
+        // maxfreq: how many seconds must have passed since last reply (replying to someone addressing him ignores this) (default 180 seconds)
+        // partake: the % chance that it will try to reply to any message sent (default 10%)
+        this.respond('Commands:\
+            $partake sets chance of replying to any message.\
+            $love sets chance of replying when addressed.\
+            $maxfreq sets # of seconds between posts (ignoring replies).\
+            $ignore adds to the ignore list.\
+            $leave makes me leave the channel.');
+    };
+
+    cmds.love = function (m, value) {
+        if (!value || isNaN(parseInt(value))) {
+            const currentVal = irc.config.ai.love[m.target.toLowerCase().slice(1)] || irc.config.ai.love.default
+            this.respond('Usage: ' + cmdchar + 'love <number from 0 and 100>. Current: ' + currentVal);
+            return;
+        }
+        const channel = m.target.slice(1);
+        irc.config.ai.love[channel] = parseInt(value);
+        saveConfig();
+        this.respond('love set to ' + value);
+    };
+
+    cmds.maxfreq = function (m, value) {
+        if (!value || isNaN(parseInt(value))) {
+            const currentVal = irc.config.ai.maxfreq[m.target.slice(1)] || irc.config.ai.maxfreq.default || 180;
+            this.respond('Usage: ' + cmdchar + 'maxfreq <number of seconds>. Current: ' + currentVal);
+            return;
+        }
+        const channel = m.target.slice(1);
+        irc.config.ai.maxfreq[channel] = parseInt(value);
+        saveConfig();
+        this.respond('maxfreq set to ' + value);
+    };
+
+    cmds.partake = function (m, value) {
+        if (!value || isNaN(parseInt(value))) {
+            const currentVal = irc.config.ai.partake[m.target.toLowerCase().slice(1)].probability || irc.config.ai.partake.default.probability || 10;
+            this.respond('Usage: ' + cmdchar + 'partake <number from 0 to 100>. Current: ' + currentVal);
+            return;
+        }
+        const channel = m.target.slice(1),
+            partconf = _.clone(irc.config.ai.partake.default) || { probability: 10, traffic: 0 };
+        partconf.probability = parseInt(value);
+        irc.config.ai.partake[channel] = partconf;
+        saveConfig();
+        this.respond('partake set to ' + value);
+    };
+
+    cmds.leave = function (m) {
+        const channel = m.target;
+        if (~irc.config.channels.indexOf(channel)) {
+            irc.config.channels.splice(irc.config.channels.indexOf(channel), 1);
+            saveConfig();
+            this.respond('Leaving ' + channel);
+            irc.send('part', channel);
+        }
+    };
+
+    cmds.summon = function (m) {
+        if (irc.config.channels.length >= 50) {
+            this.respond('Sorry, I\'m in too many channels already.');
+            return;
+        }
+        const channel = '#' + m.user.user;
+        if (!~irc.config.channels.indexOf(channel)) {
+            irc.config.channels.push(channel);
+            saveConfig();
+            this.respond('Joining ' + channel);
+            irc.send('join', channel);
+        }
     };
 
     return cmds;
