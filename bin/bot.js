@@ -121,6 +121,16 @@ function runChild(irc) {
         ipc.listen(ipcadr.port, listenComplete);
     }
 
+    ipc.on('error', (e) => {
+        if (e.code === 'EADDRINUSE') {
+            console.error('Address in use, retrying...');
+            setTimeout(() => {
+                ipc.close();
+                ipc.listen(ipcadr.path || ipcadr.port, listenComplete);
+            }, 1000);
+        }
+    });
+
     function listenComplete() {
         ipcadr.port = ipc.address().port;
         child = run(config);
