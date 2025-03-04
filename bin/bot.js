@@ -95,7 +95,7 @@ async function refreshToken(config) {
 
 function runChild(irc) {
 
-    var ipcadr = { path: '/tmp/triplie-' + process.pid + '.sock' };
+    var ipcadr = { path: '\\0kappaio' };
     if (process.platform.match(/^win/))
         ipcadr = { port: 0 };
 
@@ -120,16 +120,6 @@ function runChild(irc) {
     else {
         ipc.listen(ipcadr.port, listenComplete);
     }
-
-    ipc.on('error', (e) => {
-        if (e.code === 'EADDRINUSE') {
-            console.error('Address in use, retrying...');
-            setTimeout(() => {
-                ipc.close();
-                ipc.listen(ipcadr.path || ipcadr.port, listenComplete);
-            }, 1000);
-        }
-    });
 
     function listenComplete() {
         ipcadr.port = ipc.address().port;
@@ -186,4 +176,3 @@ function runChild(irc) {
 
 
 runChild(connection(Config.load(args)));
-
