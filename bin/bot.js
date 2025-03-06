@@ -15,6 +15,10 @@ var Config = require('../lib/config.js');
 var configFile = path.resolve(process.cwd(), args._[0] || 'config.yaml');
 
 
+const socketPath = '/tmp/triplie-' + process.pid + '.sock';
+fs.existsSync(socketPath) && fs.unlinkSync(socketPath);
+
+
 function connection(config) {
     var irc = ircee(),
         self = new EventEmitter();
@@ -95,7 +99,7 @@ async function refreshToken(config) {
 
 function runChild(irc) {
 
-    var ipcadr = { path: '\\0kappaio' };
+    var ipcadr = { path: socketPath };
     if (process.platform.match(/^win/))
         ipcadr = { port: 0 };
 
