@@ -51,30 +51,30 @@ module.exports = function (irc) {
             if (e.user.nick == irc.config.info.nick) return;
 
             var now = new Date().getTime();
-            let ignore = false, reason = '';
+            let ignore = false, reasons = [];
 
             if (isIgnoredUser(e.source)) {
                 ignore = true;
-                reason = 'ignored user';
+                reasons.push('ignored user');
             }
 
             if (e.text.toLowerCase().indexOf("your message was not sent") != -1) {
                 ignore = true;
-                reason = 'message not sent';
+                reasons.push('message not sent');
             }
 
             if (emotes.count(e.text) > 2) {
                 ignore = true;
-                reason = 'emotes';
+                reasons.push('emotes');
             }
 
             if (emotes.hasForbidden(e.text)) {
                 ignore = true;
-                reason = 'forbidden/badwords';
+                reasons.push('forbidden/badwords');
             }
 
             if (ignore) {
-                console.log('Ignored message from ' + e.source + ': ' + reason);
+                console.log('Ignored message from ' + e.source + ': ' + reasons.join(', '));
                 return;
             }
 
