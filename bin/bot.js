@@ -78,22 +78,27 @@ function saveConfig(config) {
 
 async function refreshToken(config) {
     console.log('Refreshing token');
-    const response = await fetch('https://id.twitch.tv/oauth2/token', {
-        method: "POST",
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-            client_id: config.client_id,
-            client_secret: config.client_secret,
-            grant_type: 'refresh_token',
-            refresh_token: config.refresh_token
-        })
-    });
-    const json = await response.json();
-    console.log('response: ', json);
-    config.info.pass = 'oauth:' + json.access_token;
-    config.refresh_token = json.refresh_token;
+    try {
+        const response = await fetch('https://id.twitch.tv/oauth2/token', {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                client_id: config.client_id,
+                client_secret: config.client_secret,
+                grant_type: 'refresh_token',
+                refresh_token: config.refresh_token
+            })
+        });
+        const json = await response.json();
+        console.log('response: ', json);
+        config.info.pass = 'oauth:' + json.access_token;
+        config.refresh_token = json.refresh_token;
+    } catch (e) {
+        console.error('Error refreshing token:', e);
+    }
+
     return config;
 }
 
