@@ -36,6 +36,7 @@ module.exports = function (irc) {
     };
 
     function hasPermission(user, channel, cmd) {
+        console.log('Checking permission for user: %s, channel: %s, command: %s', user, channel, cmd);
         if (isAdmin(user)) return true;
         if ('#' + user == channel && _.includes(channelCommands, cmd)) return true;
         if (channel == botChannel && _.includes(botChannelCommands, cmd)) return true;
