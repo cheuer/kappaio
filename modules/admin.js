@@ -16,7 +16,7 @@ module.exports = function (irc) {
         "leave"
     ];
 
-    var botChannel = '#' + irc.config.info.nick.toLower
+    var botChannel = '#' + irc.config.info.nick.toLowerCase()
     var botChannelCommands = [
         "summon"
     ];
