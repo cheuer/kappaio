@@ -138,6 +138,11 @@ module.exports = function (irc) {
             var prefix = wasAddressed && onChannel ? '@' + e.user.nick + ' ' : '';
 
             reply.bind(reply, ctx.get(), function (err, response) {
+                if (err) {
+                    console.error('Error in reply:', err);
+                    return;
+                }
+
                 response = response || irc.config.default_response;
                 response = emotes.fix(response);
                 if (response) {
@@ -147,15 +152,15 @@ module.exports = function (irc) {
                             if (response.charCodeAt(response.length - 1) !== 1)
                                 response += String.fromCharCode(1);
                             irc.send('privmsg', sendto, response);
-                        }
-                        else
+                        } else {
                             irc.send('privmsg', sendto, prefix + response);
+                        }
                         ctx.push(e.user.nick, prefix + response, Date.now());
-                        console.log(sendto, prefix + response);
+                        console.log('Sent message to', sendto, ':', prefix + response);
                         db.history.put(e.target, e.user.nick, e.text, response);
                     }, timeout);
                 }
-            });
+            })();
         }
     };
 
