@@ -19,9 +19,6 @@ function enoughLove(amount) {
 
 module.exports = function (irc) {
     var db = irc.use(require('./db'));
-
-    var learn, reply;
-
     var partake = Partake();
     var rochans = irc.config.readonlychannels || [];
 
@@ -140,23 +137,25 @@ module.exports = function (irc) {
             var sendto = onChannel ? e.target : e.user.nick;
             var prefix = wasAddressed && onChannel ? '@' + e.user.nick + ' ' : '';
 
-            setTimeout(reply.bind(reply, ctx.get(), function (err, response) {
+            reply.bind(reply, ctx.get(), function (err, response) {
                 response = response || irc.config.default_response;
                 response = emotes.fix(response);
                 if (response) {
-                    lastMessages[e.target] = now;
-                    if (response.match(/^.action\s+/)) {
-                        if (response.charCodeAt(response.length - 1) !== 1)
-                            response += String.fromCharCode(1);
-                        irc.send('privmsg', sendto, response);
-                    }
-                    else
-                        irc.send('privmsg', sendto, prefix + response);
-                    ctx.push(e.user.nick, prefix + response, Date.now());
-                    console.log(sendto, prefix + response);
-                    db.history.put(e.target, e.user.nick, e.text, response);
+                    setTimeout(function () {
+                        lastMessages[e.target] = now;
+                        if (response.match(/^.action\s+/)) {
+                            if (response.charCodeAt(response.length - 1) !== 1)
+                                response += String.fromCharCode(1);
+                            irc.send('privmsg', sendto, response);
+                        }
+                        else
+                            irc.send('privmsg', sendto, prefix + response);
+                        ctx.push(e.user.nick, prefix + response, Date.now());
+                        console.log(sendto, prefix + response);
+                        db.history.put(e.target, e.user.nick, e.text, response);
+                    }, timeout);
                 }
-            }), timeout);
+            });
         }
     };
 
