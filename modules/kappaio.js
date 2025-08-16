@@ -39,6 +39,65 @@ module.exports = function (irc) {
 
         var lastMessages = {};
 
+        // Simple in-memory FIFO queue for reply jobs. Ensures we queue the
+        // request before any heavy generation starts and process one reply at a time.
+        var replyQueue = [];
+        var replyProcessing = false;
+
+        function enqueueReply(job) {
+            replyQueue.push(job);
+            console.log('Queued reply to', job.nick, 'on', job.target);
+            processNextReply();
+        }
+
+        function processNextReply() {
+            if (replyProcessing) return;
+            var job = replyQueue.shift();
+            if (!job) return;
+            console.log('Starting processing reply to', job.nick, 'on', job.target);
+            replyProcessing = true;
+
+            // perform generation and sending (keeps behaviour identical to previous flow)
+            try {
+                var reply = replyer(db, irc.config.ai);
+                reply.bind(reply, job.ctx, function (err, response) {
+                    if (err) {
+                        console.error('Error in queued reply:', err);
+                        replyProcessing = false;
+                        // continue with next job
+                        setImmediate(processNextReply);
+                        return;
+                    }
+
+                    response = response || irc.config.default_response;
+                    response = emotes.fix(response);
+                    if (response) {
+                        setTimeout(function () {
+                            lastMessages[job.target] = job.now;
+                            if (response.match(/^.action\s+/)) {
+                                if (response.charCodeAt(response.length - 1) !== 1)
+                                    response += String.fromCharCode(1);
+                                irc.send('privmsg', job.sendto, response);
+                            } else {
+                                irc.send('privmsg', job.sendto, job.prefix + response);
+                            }
+                            job.ctxPush(job.nick, job.prefix + response, Date.now());
+                            console.log('Sent message to', job.sendto, ':', job.prefix + response);
+                            db.history.put(job.target, job.nick, job.text, response);
+                        }, job.timeout);
+                    }
+
+                    // finished this job — allow next one to run after a tick so timers can fire
+                    replyProcessing = false;
+                    setImmediate(processNextReply);
+                })();
+            } catch (ex) {
+                console.error('Exception processing queued reply:', ex);
+                replyProcessing = false;
+                setImmediate(processNextReply);
+            }
+        }
+
         irc.on('privmsg', learnOrReply);
 
         var contexts = {};
@@ -132,35 +191,22 @@ module.exports = function (irc) {
                     + Math.random() * (aiconf.sleep[1] - aiconf.sleep[0]))
                     * 1000;
 
-            //console.log(e.user.nick, e.text);
-            var reply = replyer(db, irc.config.ai);
+            // enqueue the reply job so generation happens in the queue worker
             var sendto = onChannel ? e.target : e.user.nick;
             var prefix = wasAddressed && onChannel ? '@' + e.user.nick + ' ' : '';
 
-            reply.bind(reply, ctx.get(), function (err, response) {
-                if (err) {
-                    console.error('Error in reply:', err);
-                    return;
-                }
-
-                response = response || irc.config.default_response;
-                response = emotes.fix(response);
-                if (response) {
-                    setTimeout(function () {
-                        lastMessages[e.target] = now;
-                        if (response.match(/^.action\s+/)) {
-                            if (response.charCodeAt(response.length - 1) !== 1)
-                                response += String.fromCharCode(1);
-                            irc.send('privmsg', sendto, response);
-                        } else {
-                            irc.send('privmsg', sendto, prefix + response);
-                        }
-                        ctx.push(e.user.nick, prefix + response, Date.now());
-                        console.log('Sent message to', sendto, ':', prefix + response);
-                        db.history.put(e.target, e.user.nick, e.text, response);
-                    }, timeout);
-                }
-            })();
+            enqueueReply({
+                now: now,
+                ctx: ctx.get(),
+                timeout: timeout,
+                sendto: sendto,
+                prefix: prefix,
+                target: e.target,
+                nick: e.user.nick,
+                text: e.text,
+                // helper to push into the current context object after sending
+                ctxPush: function (nick, msg, t) { ctx.push(nick, msg, t); }
+            });
         }
     };
 
