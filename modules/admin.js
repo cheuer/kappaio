@@ -116,7 +116,7 @@ module.exports = function (irc) {
     };
 
     cmds.part = function (m, chan) {
-        chan = chan || m.target;
+        if (chan[0] !== '#') chan = '#' + chan;
         if (~irc.config.channels.indexOf(chan)) {
             irc.config.channels.splice(irc.config.channels.indexOf(chan), 1);
             saveConfig();
