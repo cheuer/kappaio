@@ -73,7 +73,6 @@ module.exports = function (irc) {
                     response = emotes.fix(response);
                     if (response) {
                         setTimeout(function () {
-                            lastMessages[job.target] = job.now;
                             if (response.match(/^.action\s+/)) {
                                 if (response.charCodeAt(response.length - 1) !== 1)
                                     response += String.fromCharCode(1);
@@ -184,6 +183,7 @@ module.exports = function (irc) {
             }
 
             console.log('Trying to reply...');
+            lastMessages[e.target] = now;
 
             var timeout = 1;
             if (aiconf.sleep)
@@ -196,7 +196,6 @@ module.exports = function (irc) {
             var prefix = wasAddressed && onChannel ? '@' + e.user.nick + ' ' : '';
 
             enqueueReply({
-                now: now,
                 ctx: ctx.get(),
                 timeout: timeout,
                 sendto: sendto,
