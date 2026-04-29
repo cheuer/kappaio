@@ -118,7 +118,7 @@ module.exports = function (irc) {
                 reasons.push('message not sent');
             }
 
-            if (emotes.count(e.text) > 2) {
+            if (emotes.count(e.text) > 4) {
                 ignore = true;
                 reasons.push('emotes');
             }
