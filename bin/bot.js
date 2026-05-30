@@ -78,6 +78,11 @@ function saveConfig(config) {
 
 async function refreshToken(config) {
     console.log('Refreshing token');
+    if (!config.client_id || !config.client_secret || !config.refresh_token) {
+        console.error('Missing client_id, client_secret, or refresh_token in config. Cannot refresh token.');
+        return config;
+    }
+
     try {
         const response = await fetch('https://id.twitch.tv/oauth2/token', {
             method: "POST",
